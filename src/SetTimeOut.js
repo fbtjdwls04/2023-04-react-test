@@ -14,5 +14,4 @@ export default function SetTimeOut(){
         <button onClick={reSum}>재개</button>
     </>
     )
-        
 }
