@@ -1,29 +1,35 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 
 export default function NoRecord() {
-  const [no, setNo] = useState('');
   const [recordedNo, setRecordedNo] = useState([]);
+  const noInputRef = useRef(null);
 
-  const saveNo = () => {
+  const saveNo = (form) => {
+    form.no.value = form.no.value.trim();
     
-    
-    if(no == ''){
+    if(form.no.value.legnth === 0){
       alert("숫자를 입력해주세요");
+      noInputRef.current.focus();
       return;
     }
 
-    setRecordedNo([...recordedNo,no]);
-    setNo('');
+    setRecordedNo([...recordedNo,form.no.value]);
+    form.no.value = '';
+    noInputRef.current.focus();
   };
   const li = recordedNo.map((e,i)=> <li key={i}>{e}</li>)
   return (
     <>
       <form onSubmit={(e)=> {
         e.preventDefault();
-        saveNo();
-      }}>
-        <input type="number" value={no} onChange={(e)=>setNo(e.target.valueAsNumber)}/>
-        <button type="submit" className="btn">
+        saveNo(e.target);
+      }}
+      >
+        <input type="number" name="no" placeholder="숫자" ref={noInputRef}/>
+        <button 
+        type="submit" 
+        className="btn"
+        >
           기록
         </button>
       </form>

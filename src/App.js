@@ -1,9 +1,11 @@
-import { useState } from "react";
-import NoRecord from "./NoRecord";
+import { useState,useRef } from "react";
+import RefEx from "./RefEx";
+
+
 function App() {
   return (
     <>
-      <NoRecord/>
+      <RefEx/>
     </> 
   );
 }
