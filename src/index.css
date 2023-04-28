@@ -46,7 +46,7 @@ line-height: 1.3;
   :root {
     color:var(--text-color);
     background-color:var(--background-color);
-    transition: all 2s;
+    transition: all .2s;
   }
   
   .color-primary {
