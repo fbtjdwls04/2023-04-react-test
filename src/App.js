@@ -1,67 +1,41 @@
-import React,{useEffect, useState, useMemo} from "react";
-import ThemeToggle from "./ThemeToggle";
+import React,{useEffect, useState, useCallback} from "react";
 
-
-function isPrimeNumber(no){
-  for(let i = 2; i < no; i++){
-      if(i*i > no){
-          break;
-      }
-      if( no % i == 0){
-          return false;
-      }
-  }
-  return true;
-}
-
-function getPrimeNumbers(max){
-  const PrimeNumbers = [];
-  for(let i = 2; i < max; i++){
-      if(isPrimeNumber(i)){
-          PrimeNumbers.push(i);
-      }
-  }
-  return PrimeNumbers;
-}
-
-function getPrimeNumbersCount(max){
-  return getPrimeNumbers(max).length;
-}
-
-let PrimeNosCountCallCount = 0;
-
-function PrimeNosCount({max}){
-  PrimeNosCountCallCount++;
-  console.log(`PrimeNosCountCallCount : ${PrimeNosCountCallCount}`);
-  const count = useMemo(()=>getPrimeNumbersCount(max),[max]);
-
-  return (
-  <div style={{border: '10px solid black',padding:50}}>
-    {max}사이에 존재하는 소수의 개수는 {count}개 이다.
-  </div>
-  );
-} 
-
-const MemoizedPrimeNosCount = React.memo(PrimeNosCount);
-
-let AppCallCount = 0;
-function App() {
-  const [no, setNo] = useState(0);
-
-  AppCallCount++;
-  console.log(`AppCallCount : ${AppCallCount}`);
+let SubCallCount = 0;
+function Sub({no1,no2,calculateFun}) {
+  SubCallCount++;
+  console.log(`SubCallCount : ${SubCallCount}`);
 
   return (
     <>
-      <MemoizedPrimeNosCount max={100}/>
+      <div style={{border: '10px solid pink',padding: 10}}>
+        입력 : {no1}, {no2}
+        <br />
+        결과 : {calculateFun(no1,no2)}
+      </div>
+    </> 
+  );
+}
+
+const MemoizedSub = React.memo(Sub);
+
+let AppCallCount = 0;
+
+function App() {
+  AppCallCount++;
+  console.log(`AppCallCount : ${AppCallCount}`);
+  
+  const [no1, setNo1] = useState(0);
+  const [no2, setNo2] = useState(0);
+
+  const calculateFun = useCallback((a,b) => a + b + no1,[no1]);
+  
+  return (
+    <>
+      <button className="btn btn-outline" onClick={()=> setNo1(no1 + 1)}>버튼1 : {no1}</button>
       <hr />
-      <MemoizedPrimeNosCount max={200}/>
+      <button className="btn btn-outline" onClick={()=> setNo2(no2 + 1)}>버튼2 : {no2}</button>
       <hr />
-      <MemoizedPrimeNosCount max={300}/>
-      <hr />
-      <MemoizedPrimeNosCount max={1000000}/>
-      <hr />
-      <button className="btn btn-outline" onClick={()=>setNo(no + 1)}>버튼 : {no}</button>
+      <MemoizedSub no1={10} no2={20} calculateFun={calculateFun}/>
     </> 
   );
 }
