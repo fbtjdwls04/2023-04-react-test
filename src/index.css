@@ -1,6 +1,6 @@
-/* @tailwind base;
+@tailwind base;
 @tailwind components;
-@tailwind utilities; */
+@tailwind utilities;
 @font-face {
   font-family: "GmarketSansMedium";
   src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/GmarketSansMedium.woff")
@@ -47,6 +47,7 @@ html > body button {
   color: var(--text-color);
   background-color: var(--background-color);
   transition: all 0.2s;
+  overflow-y: overlay;
 }
 
 .color-primary {
@@ -58,3 +59,12 @@ html > body button {
 }
 
 /* 테마 끝 */
+
+::-webkit-scrollbar-thumb {
+  background-color: rgba(50, 40, 200, 0.5);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar {
+  width: 15px;
+}
