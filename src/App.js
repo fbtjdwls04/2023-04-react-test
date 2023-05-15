@@ -37,6 +37,15 @@ function useTodosState() {
     SetTodos(newTodos);
   };
 
+  const modifyTodoById = (id, newContent) => {
+    const index = findTodoIndexById(id);
+
+    if (index == -1) {
+      return;
+    }
+    modifyTodo(index, newContent);
+  };
+
   const removeTodo = (index) => {
     const newTodos = todos.filter((_, _index) => _index != index);
     SetTodos(newTodos);
@@ -49,6 +58,19 @@ function useTodosState() {
       removeTodo(index);
     }
   };
+  const findTodoIndexById = (id) => {
+    return todos.findIndex((todo) => todo.id == id);
+  };
+
+  const findTodoById = (id) => {
+    const index = findTodoIndexById(id);
+
+    if (index == -1) {
+      return null;
+    }
+
+    return todos[index];
+  };
 
   return {
     todos,
@@ -56,6 +78,9 @@ function useTodosState() {
     modifyTodo,
     removeTodo,
     removeTodoById,
+    findTodoIndexById,
+    findTodoById,
+    modifyTodoById,
   };
 }
 function TodoListItem({ todo, index, todosState, openDrawer }) {
@@ -131,6 +156,55 @@ function useTodoOptionDrawerStatus() {
   };
 }
 
+function EditTodoModal({ status, todosState, todo, closeDrawer }) {
+  const close = () => {
+    status.close();
+    closeDrawer();
+  };
+  const onSubmit = (e) => {
+    e.preventDefault();
+
+    const form = e.target;
+    form.content.value = form.content.value.trim();
+
+    if (form.content.value.length == 0) {
+      alert("할 일을 입력해주세요");
+      form.content.focus();
+      return;
+    }
+    todosState.modifyTodoById(todo.id, form.content.value);
+    close();
+  };
+
+  return (
+    <>
+      <Modal
+        className="flex justify-center items-center"
+        open={status.opened}
+        onClose={status.close}
+      >
+        <div className="bg-white p-10 rounded-[20px] w-full max-w-lg">
+          <form onSubmit={onSubmit} className="flex flex-col gap-2">
+            <TextField
+              minRows={3}
+              maxRows={10}
+              multiline
+              autoComplete="off"
+              name="content"
+              label="할 일을 입력해주세요."
+              variant="outlined"
+              defaultValue={todo?.content}
+            />
+            <Button type="submit" variant="contained">
+              수정
+            </Button>
+          </form>
+        </div>
+      </Modal>
+    </>
+  );
+}
+
 function useEditTodoModal() {
   const [opened, SetEditTodoModalOpened] = useState(false);
 
@@ -151,12 +225,22 @@ function useEditTodoModal() {
 function TodoOptionDrawer({ status, todosState }) {
   const useEditTodo = useEditTodoModal();
   const removeTodo = () => {
-    todosState.removeTodoById(status.todoId);
-    status.close();
+    if (window.confirm(`${status.todoId}번 할 일을 삭제하시겠습니까?`)) {
+      todosState.removeTodoById(status.todoId);
+      status.close();
+    }
   };
+
+  const todo = todosState.findTodoById(status.todoId);
 
   return (
     <>
+      <EditTodoModal
+        status={useEditTodo}
+        todosState={todosState}
+        todo={todo}
+        closeDrawer={status.close}
+      />
       <SwipeableDrawer
         anchor={"bottom"}
         onOpen={() => {}}
@@ -166,7 +250,7 @@ function TodoOptionDrawer({ status, todosState }) {
         <List className="!py-0">
           <ListItem className="!p-5 !pt-6">
             <span className="text-[color:var(--mui-color-primary-main)]">
-              {status.todoId}번
+              {todo?.id}번
             </span>
             <span>&nbsp;</span>
             <span>할 일에 대해</span>
@@ -187,13 +271,6 @@ function TodoOptionDrawer({ status, todosState }) {
           </ListItemButton>
         </List>
       </SwipeableDrawer>
-      <Modal
-        className="flex justify-center items-center"
-        open={useEditTodo.opened}
-        onClose={useEditTodo.close}
-      >
-        <div className="bg-white p-10 rounded-[20px]">안녕하세요</div>
-      </Modal>
     </>
   );
 }
@@ -245,6 +322,7 @@ function NewTodoForm({ todosState }) {
         <TextField
           minRows={3}
           maxRows={10}
+          multiline
           autoComplete="off"
           name="content"
           label="할 일을 입력해주세요"
