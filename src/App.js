@@ -28,6 +28,7 @@ function useTodosState() {
       id,
       content: newContent,
       regDate: dateToStr(new Date()),
+      check: false,
     };
     SetTodos((todos) => [newTodo, ...todos]);
 
@@ -76,6 +77,13 @@ function useTodosState() {
     return todos[index];
   };
 
+  const check = (id) => {
+    const newTodo = todos.map((todo) =>
+      todo.id == id ? { ...todo, check: !todo.check } : todo
+    );
+    SetTodos(newTodo);
+  };
+
   return {
     todos,
     addTodo,
@@ -85,6 +93,7 @@ function useTodosState() {
     findTodoIndexById,
     findTodoById,
     modifyTodoById,
+    check,
   };
 }
 function TodoListItem({ todo, index, todosState, openDrawer }) {
@@ -108,6 +117,7 @@ function TodoListItem({ todo, index, todosState, openDrawer }) {
           <Button
             className="flex-shrink-0 !items-start !rounded-[20px_0_0_20px]"
             color="inherit"
+            onClick={() => todosState.check(todo.id)}
           >
             <span
               className={classNames(
@@ -115,9 +125,9 @@ function TodoListItem({ todo, index, todosState, openDrawer }) {
                 "items-center",
                 "text-4xl",
                 {
-                  "text-[color:var(--mui-color-primary-main)]": index % 2 == 0,
+                  "text-[color:var(--mui-color-primary-main)]": todo.check,
                 },
-                { "text-[#dfdfdf]": index % 2 != 0 }
+                { "text-[#dfdfdf]": !todo.check }
               )}
             >
               <i className="fa-solid fa-check"></i>
@@ -127,7 +137,13 @@ function TodoListItem({ todo, index, todosState, openDrawer }) {
           <div className="flex-shrink-0 my-3 mr-4 w-[2px] bg-[#dfdfdf]"></div>
 
           <div className="whitespace-pre-wrap leading-relaxed hover:text-[color:var(--mui-color-primary-main)] flex-grow my-5">
-            {todo.content}
+            <p
+              className={classNames({
+                "line-through": todo.check,
+              })}
+            >
+              {todo.content}
+            </p>
           </div>
 
           <div className="flex-shrink-0 my-3 w-[2px] bg-[#dfdfdf]"></div>
@@ -306,6 +322,7 @@ function TodoList({ todosState, noticeSnackBarState }) {
             <TodoListItem
               todo={todo}
               index={index}
+              todosState={todosState}
               openDrawer={todoOptionDrawerStatus.open}
             />
           ))}
