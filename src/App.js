@@ -1,5 +1,12 @@
 import React, { useEffect, useState, useRef, useMemo } from "react";
 import {
+  atom,
+  atomFamily,
+  useRecoilState,
+  useSetRecoilState,
+  useRecoilValue,
+} from "recoil";
+import {
   AppBar,
   TextField,
   Toolbar,
@@ -17,9 +24,24 @@ import {
 import classNames from "classnames";
 import Order from "./Order";
 
+const Alert = React.forwardRef((props, ref) => {
+  return <MuiAlert {...props} ref={ref} variant="filled" />;
+});
+
+const todoAtom = atom({
+  key: "app/todoAtom",
+  default: [],
+});
+
+const lastTodoIdAtom = atom({
+  key: "app/lastTodoIdAtom",
+  default: 0,
+});
+
 function useTodosState() {
-  const [todos, SetTodos] = useState([]);
-  const lastTodoIdRef = useRef(0);
+  const [todos, SetTodos] = useRecoilState(todoAtom);
+  const [lastTodoId, setLastTodoId] = useRecoilState(lastTodoIdAtom);
+  const lastTodoIdRef = useRef(lastTodoId);
 
   const addTodo = (newContent) => {
     const id = ++lastTodoIdRef.current;
@@ -372,10 +394,6 @@ function NewTodoForm({ todosState, noticeSnackBarState }) {
 }
 
 function NoticeSnackBar({ state }) {
-  const Alert = React.forwardRef((props, ref) => {
-    return <MuiAlert {...props} ref={ref} variant="filled" />;
-  });
-
   return (
     <>
       <Snackbar
