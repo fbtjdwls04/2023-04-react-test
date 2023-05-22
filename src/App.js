@@ -43,8 +43,11 @@ function useTodosState() {
   const [lastTodoId, setLastTodoId] = useRecoilState(lastTodoIdAtom);
   const lastTodoIdRef = useRef(lastTodoId);
 
+  lastTodoIdRef.current = lastTodoId;
+
   const addTodo = (newContent) => {
     const id = ++lastTodoIdRef.current;
+    setLastTodoId(id);
 
     const newTodo = {
       id,
@@ -118,7 +121,8 @@ function useTodosState() {
     check,
   };
 }
-function TodoListItem({ todo, index, todosState, openDrawer }) {
+function TodoListItem({ todo, index, openDrawer }) {
+  const todosState = useTodosState();
   return (
     <>
       <li key={todo.id} className="mt-10">
@@ -198,13 +202,8 @@ function useTodoOptionDrawerStatus() {
   };
 }
 
-function EditTodoModal({
-  status,
-  todosState,
-  todo,
-  closeDrawer,
-  noticeSnackBarState,
-}) {
+function EditTodoModal({ status, todo, closeDrawer, noticeSnackBarState }) {
+  const todosState = useTodosState();
   const close = () => {
     status.close();
     closeDrawer();
@@ -271,8 +270,9 @@ function useEditTodoModal() {
   };
 }
 
-function TodoOptionDrawer({ status, todosState, noticeSnackBarState }) {
+function TodoOptionDrawer({ status, noticeSnackBarState }) {
   const useEditTodo = useEditTodoModal();
+  const todosState = useTodosState();
   const removeTodo = () => {
     if (window.confirm(`${status.todoId}번 할 일을 삭제하시겠습니까?`)) {
       todosState.removeTodoById(status.todoId);
@@ -290,7 +290,6 @@ function TodoOptionDrawer({ status, todosState, noticeSnackBarState }) {
     <>
       <EditTodoModal
         status={useEditTodo}
-        todosState={todosState}
         todo={todo}
         closeDrawer={status.close}
         noticeSnackBarState={noticeSnackBarState}
@@ -329,13 +328,13 @@ function TodoOptionDrawer({ status, todosState, noticeSnackBarState }) {
   );
 }
 
-function TodoList({ todosState, noticeSnackBarState }) {
+function TodoList({ noticeSnackBarState }) {
   const todoOptionDrawerStatus = useTodoOptionDrawerStatus();
+  const todosState = useTodosState();
   return (
     <>
       <TodoOptionDrawer
         status={todoOptionDrawerStatus}
-        todosState={todosState}
         noticeSnackBarState={noticeSnackBarState}
       />
       <div className="mt-5 px-4">
@@ -344,7 +343,6 @@ function TodoList({ todosState, noticeSnackBarState }) {
             <TodoListItem
               todo={todo}
               index={index}
-              todosState={todosState}
               openDrawer={todoOptionDrawerStatus.open}
             />
           ))}
@@ -353,7 +351,9 @@ function TodoList({ todosState, noticeSnackBarState }) {
     </>
   );
 }
-function NewTodoForm({ todosState, noticeSnackBarState }) {
+function NewTodoForm({ noticeSnackBarState }) {
+  const todosState = useTodosState();
+
   const onSubmit = (e) => {
     e.preventDefault();
 
@@ -456,15 +456,9 @@ function App() {
       <Toolbar />
 
       <NoticeSnackBar state={noticeSnackBarState} />
-      <NewTodoForm
-        todosState={todosState}
-        noticeSnackBarState={noticeSnackBarState}
-      />
+      <NewTodoForm noticeSnackBarState={noticeSnackBarState} />
 
-      <TodoList
-        todosState={todosState}
-        noticeSnackBarState={noticeSnackBarState}
-      />
+      <TodoList noticeSnackBarState={noticeSnackBarState} />
     </>
   );
 }
