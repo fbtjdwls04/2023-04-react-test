@@ -23,6 +23,15 @@ import {
 } from "@mui/material";
 import classNames from "classnames";
 import Order from "./Order";
+import { recoilPersist } from "recoil-persist";
+
+const { persistAtom: persistAtomTodos } = recoilPersist({
+  key: persistAtomTodos,
+});
+
+const { persistAtom: persistAtomLastTodoId } = recoilPersist({
+  key: persistAtomLastTodoId,
+});
 
 const Alert = React.forwardRef((props, ref) => {
   return <MuiAlert {...props} ref={ref} variant="filled" />;
@@ -30,12 +39,30 @@ const Alert = React.forwardRef((props, ref) => {
 
 const todoAtom = atom({
   key: "app/todoAtom",
-  default: [],
+  default: [
+    {
+      id: 3,
+      content: "응애",
+      regDate: "2023-05-22",
+    },
+    {
+      id: 2,
+      content: "운동",
+      regDate: "2023-05-22",
+    },
+    {
+      id: 1,
+      content: "공부",
+      regDate: "2023-05-22",
+    },
+  ],
+  effects_UNSTABLE: [persistAtomTodos],
 });
 
 const lastTodoIdAtom = atom({
   key: "app/lastTodoIdAtom",
-  default: 0,
+  default: 3,
+  effects_UNSTABLE: [persistAtomLastTodoId],
 });
 
 function useTodosState() {
@@ -436,12 +463,6 @@ function useNoticeSnackBarState() {
 function App() {
   const todosState = useTodosState();
   const noticeSnackBarState = useNoticeSnackBarState();
-
-  useEffect(() => {
-    todosState.addTodo("운동\n스트레칭\n헬스\n복싱\n주짓수");
-    todosState.addTodo("공부");
-    todosState.addTodo("독서");
-  }, []);
 
   return (
     <>
