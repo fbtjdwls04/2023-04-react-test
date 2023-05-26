@@ -24,6 +24,7 @@ import {
 import classNames from "classnames";
 import Order from "./Order";
 import { recoilPersist } from "recoil-persist";
+import { Route, Routes } from "react-router-dom";
 
 const { persistAtom: persistAtomTodos } = recoilPersist({
   key: "persistAtomTodos",
@@ -437,7 +438,7 @@ function NoticeSnackBar() {
   );
 }
 
-const { noticeSnackBarInfoAtom } = atom({
+const noticeSnackBarInfoAtom = atom({
   key: "app/noticeSnackBarInfoAtom",
   default: {
     opened: false,

@@ -1,107 +1,204 @@
-import { useState } from "react";
-import { Button } from "@mui/material";
+import { useState, useRef } from "react";
 import {
-  Routes,
   Route,
-  Navigate,
-  useLocation,
+  Routes,
   NavLink,
   useParams,
-  useNavigate,
+  useLocation,
+  Navigate,
 } from "react-router-dom";
-import classNames from "classnames";
-function HomeMainPage() {
-  return <h1>HOME, MAIN</h1>;
+import { atom, useRecoilState } from "recoil";
+
+const todosAtom = atom({
+  key: "app/todosAtom",
+  default: [
+    { id: 3, regDate: "2023-12-12 12:12:12", content: "구라에요" },
+    { id: 2, regDate: "2023-12-12 12:12:12", content: "반가워요" },
+    { id: 1, regDate: "2023-12-12 12:12:12", content: "안녕하세요" },
+  ],
+});
+
+function useTodosState() {
+  const [todos, setTodos] = useRecoilState(todosAtom);
+  const lastTodoIdRef = useRef(todos[0].id);
+  const addTodo = (content) => {
+    const regDate = "2023-12-12 12:12:12";
+    const newTodo = {
+      id: ++lastTodoIdRef.current,
+      content,
+      regDate,
+    };
+    const newTodos = [newTodo, ...todos];
+    setTodos(newTodos);
+  };
+  const findIndexById = (id) => {
+    return todos.findIndex((todo) => todo.id == id);
+  };
+
+  const removeToboById = (id) => {
+    const index = findIndexById(id);
+    if (index == -1) return;
+    const newTodos = todos.filter((_, _index) => index != _index);
+    setTodos(newTodos);
+  };
+  const modifyTodoById = (id, content) => {
+    const index = findIndexById(id);
+    if (index == -1) {
+      return;
+    }
+    const newTodos = todos.map((todo, _index) =>
+      index == _index ? { ...todo, content } : todo
+    );
+    setTodos(newTodos);
+  };
+  return {
+    todos,
+    addTodo,
+    removeToboById,
+    modifyTodoById,
+  };
 }
 
-function HomeAboutPage() {
-  return <h1>HOME ABOUT</h1>;
+function TodoListItem({ todo }) {
+  const [editMode, SetEditMode] = useState(false);
+  const todosState = useTodosState();
+  const showEditMode = () => {
+    SetEditMode(true);
+  };
+  const cancelEditMode = (e) => {
+    SetEditMode(false);
+  };
+
+  const onSubmitEditForm = (e) => {
+    e.preventDefault();
+
+    const form = e.target;
+    form.content.value = form.content.value.trim();
+    if (form.content.value.length == 0) {
+      alert("할 일을 입력해주세요");
+      form.content.focus();
+      return;
+    }
+    todosState.modifyTodoById(todo.id, form.content.value);
+    cancelEditMode();
+  };
+  return (
+    <li key={todo.id}>
+      {todo.id} : {todo.content}
+      <button
+        className="btn btn-sm"
+        onClick={() =>
+          window.confirm(`${todo.id}번 할 일을 삭제하시겠습니까?`) &&
+          todosState.removeToboById(todo.id)
+        }
+      >
+        삭제
+      </button>
+      {editMode || (
+        <button className="btn btn-sm" onClick={showEditMode}>
+          수정
+        </button>
+      )}
+      {editMode && (
+        <form onSubmit={onSubmitEditForm} style={{ display: "inline-block" }}>
+          <input
+            type="text"
+            defaultValue={todo.content}
+            placeholder="할 일"
+            name="content"
+            className="input input-bordered max-w-xs"
+          ></input>
+          <button className="btn btn-sm" type="submit">
+            수정완료
+          </button>
+          <button className="btn btn-sm" onClick={cancelEditMode}>
+            수정취소
+          </button>
+        </form>
+      )}
+    </li>
+  );
 }
 
-function ArticleListPage() {
-  const article = [{ id: 1 }, { id: 2 }];
+function TodoListPage() {
+  const todosState = useTodosState();
+  return (
+    <ul>
+      {todosState.todos.map((todo) => (
+        <TodoListItem key={todo.id} todo={todo} />
+      ))}
+    </ul>
+  );
+}
+
+function TodoWritePage() {
+  const todosState = useTodosState();
+
+  const onSubmit = (e) => {
+    e.preventDefault();
+
+    const form = e.target;
+
+    form.content.value = form.content.value.trim();
+
+    if (form.content.value.length == 0) {
+      alert("할 일을 입력해주세요");
+      form.content.focus();
+
+      return;
+    }
+    const newTodo = form.content.value;
+    form.content.value = "";
+    form.content.focus();
+    todosState.addTodo(newTodo);
+  };
   return (
     <>
-      <h1>ARTICLE, LIST</h1>
-      <ul>
-        {article.map((article) => (
-          <li key={article.id}>
-            <NavLink to={`/article/detail/${article.id}`}>
-              {article.id}번 게시물
-            </NavLink>
-          </li>
-        ))}
-      </ul>
+      <h1>할 일 작성</h1>
+      <form onSubmit={onSubmit} className="mt-2">
+        <input
+          type="text"
+          name="content"
+          placeholder="할 일을 작성해주세요"
+          className="input input-bordered w-full max-w-xs"
+        />
+        <input type="submit" value="작성" className="btn" />
+      </form>
+      <ul>{todosState.todos.length}</ul>
     </>
   );
 }
 
-function ArticleDetailPage() {
-  const navigate = useNavigate();
-  const { id } = useParams();
-
-  return (
-    <>
-      <h1>ARTICLE, DETAIL</h1>
-      <h1>{id}번 게시물 상시</h1>
-      <button onClick={() => navigate(-1)}>뒤로가기</button>
-    </>
-  );
-}
-
-function App() {
+export default function App() {
   const location = useLocation();
   return (
     <>
-      <header>현재 주소 : {location.pathname}</header>
-      <hr />
-      <div>
+      <header>
         <NavLink
-          to="/home/main"
-          className={({ isActive }) =>
-            classNames(
-              "btn",
-              { "btn-link": !isActive },
-              { "btn-primary": isActive }
-            )
-          }
+          to="/list"
+          style={({ isActive }) => ({
+            color: isActive ? "red" : null,
+          })}
         >
-          Home, Main 페이지
+          리스트
         </NavLink>
+        &nbsp;/&nbsp;
         <NavLink
-          to="/home/about"
-          className={({ isActive }) =>
-            classNames(
-              "btn",
-              { "btn-link": !isActive },
-              { "btn-primary": isActive }
-            )
-          }
+          to="/write"
+          style={({ isActive }) => ({
+            color: isActive ? "red" : null,
+          })}
         >
-          Home, about 페이지
+          작성
         </NavLink>
-        <NavLink
-          to="/article/List"
-          className={({ isActive }) =>
-            classNames(
-              "btn",
-              { "btn-link": !isActive },
-              { "btn-primary": isActive }
-            )
-          }
-        >
-          article, list 페이지
-        </NavLink>
-      </div>
+        <hr />
+        주소 : {location.pathname}
+      </header>
       <Routes>
-        <Route path="/home/main" element={<HomeMainPage />} />
-        <Route path="/home/about" element={<HomeAboutPage />} />
-        <Route path="/article/List" element={<ArticleListPage />} />
-        <Route path="/article/detail/:id" element={<ArticleDetailPage />} />
-        <Route path="*" element={<Navigate to="/home/main" />} />
+        <Route path="/list" element={<TodoListPage />}></Route>
+        <Route path="/write" element={<TodoWritePage />}></Route>
+        <Route path="*" element={<Navigate to="write" />}></Route>
       </Routes>
     </>
   );
 }
-
-export default App;
