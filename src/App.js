@@ -6,8 +6,10 @@ import {
   useParams,
   useLocation,
   Navigate,
+  useNavigate,
 } from "react-router-dom";
 import { atom, useRecoilState } from "recoil";
+import { Button } from "@mui/material";
 
 const todosAtom = atom({
   key: "app/todosAtom",
@@ -20,7 +22,7 @@ const todosAtom = atom({
 
 function useTodosState() {
   const [todos, setTodos] = useRecoilState(todosAtom);
-  const lastTodoIdRef = useRef(todos[0].id);
+  const lastTodoIdRef = useRef(todos.length == 0 ? 0 : todos[0].id);
   const addTodo = (content) => {
     const regDate = "2023-12-12 12:12:12";
     const newTodo = {
@@ -31,6 +33,7 @@ function useTodosState() {
     const newTodos = [newTodo, ...todos];
     setTodos(newTodos);
   };
+
   const findIndexById = (id) => {
     return todos.findIndex((todo) => todo.id == id);
   };
@@ -41,6 +44,7 @@ function useTodosState() {
     const newTodos = todos.filter((_, _index) => index != _index);
     setTodos(newTodos);
   };
+
   const modifyTodoById = (id, content) => {
     const index = findIndexById(id);
     if (index == -1) {
@@ -51,39 +55,27 @@ function useTodosState() {
     );
     setTodos(newTodos);
   };
+
+  const findTodoById = (id) => {
+    const index = findIndexById(id);
+    return todos[index];
+  };
   return {
     todos,
     addTodo,
     removeToboById,
     modifyTodoById,
+    findTodoById,
   };
 }
 
 function TodoListItem({ todo }) {
-  const [editMode, SetEditMode] = useState(false);
   const todosState = useTodosState();
-  const showEditMode = () => {
-    SetEditMode(true);
-  };
-  const cancelEditMode = (e) => {
-    SetEditMode(false);
-  };
-
-  const onSubmitEditForm = (e) => {
-    e.preventDefault();
-
-    const form = e.target;
-    form.content.value = form.content.value.trim();
-    if (form.content.value.length == 0) {
-      alert("할 일을 입력해주세요");
-      form.content.focus();
-      return;
-    }
-    todosState.modifyTodoById(todo.id, form.content.value);
-    cancelEditMode();
-  };
   return (
-    <li key={todo.id}>
+    <li
+      key={todo.id}
+      className="p-4 my-2 border-[--mui-color-primary-main] border-2 rounded-[20px]"
+    >
       {todo.id} : {todo.content}
       <button
         className="btn btn-sm"
@@ -94,28 +86,9 @@ function TodoListItem({ todo }) {
       >
         삭제
       </button>
-      {editMode || (
-        <button className="btn btn-sm" onClick={showEditMode}>
-          수정
-        </button>
-      )}
-      {editMode && (
-        <form onSubmit={onSubmitEditForm} style={{ display: "inline-block" }}>
-          <input
-            type="text"
-            defaultValue={todo.content}
-            placeholder="할 일"
-            name="content"
-            className="input input-bordered max-w-xs"
-          ></input>
-          <button className="btn btn-sm" type="submit">
-            수정완료
-          </button>
-          <button className="btn btn-sm" onClick={cancelEditMode}>
-            수정취소
-          </button>
-        </form>
-      )}
+      <NavLink className="btn btn-sm" to={`/edit/${todo.id}`}>
+        수정
+      </NavLink>
     </li>
   );
 }
@@ -133,7 +106,7 @@ function TodoListPage() {
 
 function TodoWritePage() {
   const todosState = useTodosState();
-
+  const navigate = useNavigate();
   const onSubmit = (e) => {
     e.preventDefault();
 
@@ -151,6 +124,7 @@ function TodoWritePage() {
     form.content.value = "";
     form.content.focus();
     todosState.addTodo(newTodo);
+    navigate("/list", { replace: true });
   };
   return (
     <>
@@ -169,36 +143,89 @@ function TodoWritePage() {
   );
 }
 
-export default function App() {
+function TodoEditPage() {
+  const todosState = useTodosState();
+  const { id } = useParams();
+  const todo = todosState.findTodoById(id);
+  const navigate = useNavigate();
+  const onSubmit = (e) => {
+    e.preventDefault();
+
+    const form = e.target;
+
+    form.content.value = form.content.value.trim();
+
+    if (form.content.value.length == 0) {
+      alert("할 일을 입력해주세요");
+      form.content.focus();
+      return;
+    }
+    const content = form.content.value;
+
+    todosState.modifyTodoById(id, content);
+    navigate("/list", { replace: true });
+  };
+  return (
+    <>
+      <h1>할 일 수정</h1>
+      <form onSubmit={onSubmit} style={{ display: "inline-block" }}>
+        <input
+          type="text"
+          defaultValue={todo.content}
+          placeholder="할 일"
+          name="content"
+          className="input input-bordered max-w-xs"
+        ></input>
+        <button className="btn btn-sm" type="submit">
+          수정
+        </button>
+        <NavLink className="btn btn-sm" to="/list">
+          취소
+        </NavLink>
+      </form>
+    </>
+  );
+}
+
+function TopMenuBar() {
   const location = useLocation();
   return (
     <>
-      <header>
-        <NavLink
-          to="/list"
-          style={({ isActive }) => ({
-            color: isActive ? "red" : null,
-          })}
-        >
-          리스트
-        </NavLink>
-        &nbsp;/&nbsp;
-        <NavLink
-          to="/write"
-          style={({ isActive }) => ({
-            color: isActive ? "red" : null,
-          })}
-        >
-          작성
-        </NavLink>
-        <hr />
-        주소 : {location.pathname}
+      <NavLink
+        to="/list"
+        style={({ isActive }) => ({
+          color: isActive ? "red" : null,
+        })}
+      >
+        <Button variant="outlined">리스트</Button>
+      </NavLink>
+      <NavLink
+        to="/write"
+        style={({ isActive }) => ({
+          color: isActive ? "red" : null,
+        })}
+      >
+        <Button variant="outlined">작성</Button>
+      </NavLink>
+      <span className="ml-5">주소 : {location.pathname}</span>
+    </>
+  );
+}
+
+export default function App() {
+  return (
+    <>
+      <header className="mx-10 mt-5 bg-purple-100 p-5 rounded-[20px]">
+        <TopMenuBar />
       </header>
-      <Routes>
-        <Route path="/list" element={<TodoListPage />}></Route>
-        <Route path="/write" element={<TodoWritePage />}></Route>
-        <Route path="*" element={<Navigate to="write" />}></Route>
-      </Routes>
+      <div className="p-10 m-10 h-[700px] border-[--mui-color-primary-main] rounded-[20px] border-4 overflow-y-scroll">
+        <Routes>
+          <Route path="/list" element={<TodoListPage />}></Route>
+          <Route path="/write" element={<TodoWritePage />}></Route>
+          <Route path="/edit/:id" element={<TodoEditPage />}></Route>
+          <Route path="*" element={<Navigate to="write" />}></Route>
+        </Routes>
+      </div>
     </>
   );
 }
