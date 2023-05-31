@@ -10,6 +10,7 @@ import {
 } from "react-router-dom";
 import { atom, useRecoilState } from "recoil";
 import { Button } from "@mui/material";
+import { produce } from "immer";
 
 const todosAtom = atom({
   key: "app/todosAtom",
@@ -23,14 +24,22 @@ const todosAtom = atom({
 function useTodosState() {
   const [todos, setTodos] = useRecoilState(todosAtom);
   const lastTodoIdRef = useRef(todos.length == 0 ? 0 : todos[0].id);
+
   const addTodo = (content) => {
     const regDate = "2023-12-12 12:12:12";
-    const newTodo = {
-      id: ++lastTodoIdRef.current,
-      content,
-      regDate,
-    };
-    const newTodos = [newTodo, ...todos];
+    const id = ++lastTodoIdRef.current;
+    // 기존방식
+    // const newTodo = {
+    //   id,
+    //   content,
+    //   regDate,
+    // };
+    // const newTodos = [newTodo, ...todos];
+
+    const newTodos = produce(todos, (draft) => {
+      draft.unshift({ id, content, regDate });
+    });
+
     setTodos(newTodos);
   };
 
@@ -41,7 +50,22 @@ function useTodosState() {
   const removeToboById = (id) => {
     const index = findIndexById(id);
     if (index == -1) return;
-    const newTodos = todos.filter((_, _index) => index != _index);
+
+    // 기존방식
+    // const newTodos = todos.filter((_, _index) => index != _index);
+
+    const newTodos = produce(todos, (draft) => {
+      draft.splice(index, 1);
+    });
+
+    setTodos(newTodos);
+  };
+
+  const removeAllTodos = () => {
+    if (!window.confirm("정말 게시글 전체를 삭제하시겠습니까?")) {
+      return;
+    }
+    const newTodos = [];
     setTodos(newTodos);
   };
 
@@ -50,9 +74,17 @@ function useTodosState() {
     if (index == -1) {
       return;
     }
-    const newTodos = todos.map((todo, _index) =>
-      index == _index ? { ...todo, content } : todo
-    );
+
+    // 기존 방식
+    // const newTodos = todos.map((todo, _index) =>
+    //   index == _index ? { ...todo, content } : todo
+    // );
+    // setTodos(newTodos);
+
+    const newTodos = produce(todos, (draft) => {
+      draft[index].content = content;
+    });
+
     setTodos(newTodos);
   };
 
@@ -66,6 +98,7 @@ function useTodosState() {
     removeToboById,
     modifyTodoById,
     findTodoById,
+    removeAllTodos,
   };
 }
 
@@ -189,6 +222,7 @@ function TodoEditPage() {
 
 function TopMenuBar() {
   const location = useLocation();
+  const todosState = useTodosState();
   return (
     <>
       <NavLink
@@ -207,6 +241,9 @@ function TopMenuBar() {
       >
         <Button variant="outlined">작성</Button>
       </NavLink>
+      <Button variant="outlined" onClick={todosState.removeAllTodos}>
+        전체 글 삭제
+      </Button>
       <span className="ml-5">주소 : {location.pathname}</span>
     </>
   );
@@ -215,7 +252,7 @@ function TopMenuBar() {
 export default function App() {
   return (
     <>
-      <header className="mx-10 mt-5 bg-purple-100 p-5 rounded-[20px]">
+      <header className="mx-10 mt-5 bg-purple-50 p-5 rounded-[20px]">
         <TopMenuBar />
       </header>
       <div className="p-10 m-10 h-[700px] border-[--mui-color-primary-main] rounded-[20px] border-4 overflow-y-scroll">
